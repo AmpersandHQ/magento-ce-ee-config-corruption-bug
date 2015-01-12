@@ -49,3 +49,47 @@ Your website produces nothing but `Front controller reached 100 router match ite
 Your homepage fails to load the CSS, and a message is displayed saying `There was no 404 CMS page configured or found`. 
 
 I have not spent much time debugging the effects on the community edition, there are likely other symptoms. (Tested on Magento 1.9.1.0)
+
+## Debugging the Issue ##
+
+[Many](http://tutorialmagento.com/fixing-front-controller-reached-100-router-match-iterations) [sources](http://www.magestore.com/magento/magento-front-controller-reached-100-router-match-iterations-error.html) [correctly](http://stackoverflow.com/questions/6262129/magento-front-controller-reached-100-router-match-iterations-error) point out that the problem is caused by some of the routers disappearing from the configuration object, meaning there is no router available to match the request.
+
+This error only occurs when the routers configuration was loaded from cache. To stop the bug from bringing down the website and to aid my debugging I rewrote `Mage_Core_Model_Cache::save()` such that it would do some quick data validation, and prevent corrupted data being saved.
+
+```php
+    /**
+     * Save data
+     *
+     * @param string $data
+     * @param string $id
+     * @param array $tags
+     * @param int $lifeTime
+     * @return bool
+     */
+    public function save($data, $id, $tags = array(), $lifeTime = null)
+    {
+        //Patch for 100 routers problem
+        if (strpos($id,'config_global_stores_') !== false) {
+            $xml = new SimpleXMLElement($data);
+            $xmlPath = $xml->xpath('web/routers/standard');
+            if (count($xmlPath) != 1) {
+                //Returning true to prevent it from saving an incomplete cache entry
+                return true;
+            }
+        }
+
+        if ($this->_disallowSave) {
+            return true;
+        }
+
+        /**
+         * Add global magento cache tag to all cached data exclude config cache
+         */
+        if (!in_array(Mage_Core_Model_Config::CACHE_TAG, $tags)) {
+            $tags[] = Mage_Core_Model_App::CACHE_TAG;
+        }
+        return $this->getFrontend()->save((string)$data, $this->_id($id), $this->_tags($tags), $lifeTime);
+    }
+```
+
+This code change did not 'solve' the issue, but it did stop the website crashing so much. It was also useful as a point of debugging, as I now had a place from which I could monitor and log the issue.
