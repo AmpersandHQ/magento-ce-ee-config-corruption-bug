@@ -68,7 +68,7 @@ This error only occurs when the routers configuration was loaded from cache. To 
      */
     public function save($data, $id, $tags = array(), $lifeTime = null)
     {
-        //Patch for 100 routers problem
+        //Start patch for 100 routers problem
         if (strpos($id,'config_global_stores_') !== false) {
             $xml = new SimpleXMLElement($data);
             $xmlPath = $xml->xpath('web/routers/standard');
@@ -77,6 +77,7 @@ This error only occurs when the routers configuration was loaded from cache. To 
                 return true;
             }
         }
+        //End patch
 
         if ($this->_disallowSave) {
             return true;
@@ -93,3 +94,8 @@ This error only occurs when the routers configuration was loaded from cache. To 
 ```
 
 This code change did not 'solve' the issue, but it did stop the website crashing so much. It was also useful as a point of debugging, as I now had a place from which I could monitor and log the issue.
+
+## The Problem ##
+
+By using apache bench to stress my Magento instance along with a lot of `file_put_contents` debugging, I was able to discover that the invalid configuration was generated in the `loadDb` method of `Mage_Core_Model_Config`, but only when `init` has been called on the singleton at least once before.
+
