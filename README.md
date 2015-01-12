@@ -42,35 +42,6 @@ If at any point something were to silently go wrong within `loadModules` or `loa
 
 This logic is underpinned by the `_getSectionConfig` function.
 
-```php
-    /**
-     * Getter for section configuration object
-     *
-     * @param array $path
-     * @return Mage_Core_Model_Config_Element
-     */
-    protected function _getSectionConfig($path)
-    {
-        $section = $path[0];
-        if (!isset($this->_cacheSections[$section])) {
-            return false;
-        }
-        $sectionPath = array_slice($path, 0, $this->_cacheSections[$section]+1);
-        $sectionKey = implode('_', $sectionPath);
-
-        if (!isset($this->_cacheLoadedSections[$sectionKey])) {
-            Varien_Profiler::start('init_config_section:' . $sectionKey);
-            $this->_cacheLoadedSections[$sectionKey] = $this->_loadSectionCache($sectionKey);
-            Varien_Profiler::stop('init_config_section:' . $sectionKey);
-        }
-
-        if ($this->_cacheLoadedSections[$sectionKey] === false) {
-            return false;
-        }
-        return $this->_cacheLoadedSections[$sectionKey];
-    }
-```
-
 ##Symptoms##
 
 The following symptoms would usually manifest when the website is experiencing high load, and very often after a cache flush was triggered. The symptoms persist until you flush the `CONFIG` cache.
