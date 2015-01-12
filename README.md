@@ -2,7 +2,7 @@
 
 http://ampersandcommerce.com 
 ##Preface##
-The majority of my experimentation took place on EE 1.13.0.1 and while this bug does also affect CE 1.9.1.0, I will be referring to EE 1.13.0.1 code throughout the explanation.
+The majority of my experimentation took place on EE 1.13.0.1 and while this bug does also affect CE 1.9.1.0 I will be referring to EE 1.13.0.1 code throughout the explanation.
 
 ##`Mage_Core_Model_Config` and Caching##
 
@@ -36,7 +36,7 @@ The majority of my experimentation took place on EE 1.13.0.1 and while this bug 
     }
 ```
 
-If at any point something were to silently go wrong within `loadModules` or `loadDb`, then corrupted configuration would be saved into cache. Meaning that the following request would be served invalid configuration from the cachebelievining it could retrieve a fully populated configuration object from cache despite 
+If at any point something were to silently go wrong within `loadModules` or `loadDb`, then corrupted configuration would be saved into cache, meaning that the following request would be served invalid configuration.
 
 ##Symptoms##
 
