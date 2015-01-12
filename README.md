@@ -38,7 +38,7 @@ The majority of my experimentation took place on EE 1.13.0.1 and while this bug 
 
 If at any point something were to silently go wrong within `loadModules` or `loadDb`, then corrupted configuration would be saved into cache, meaning that the following request would be served invalid configuration.
 
-`Mage_Core_Model_Config` also has a protected variable `$_useCache`, hen this flag is set Magento will attempt to use load sections of the config from cache storage, then persist them within the singleton itself. 
+`Mage_Core_Model_Config` also has a protected variable `$_useCache`, when this flag is set Magento will attempt to use load sections of the config from cache storage then persist them within the singleton itself. 
 
 This logic is underpinned by the `_getSectionConfig` function.
 
@@ -136,6 +136,60 @@ By using apache bench to stress my Magento instance along with a lot of `file_pu
 2. The first call to must successfully load from cache and set `$_useCache = true`
 3. The second call must fail to retrieve the config from cache, and proceed to rebuild the cache while still having `$_useCache = true`
 
+To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config::init()` and a few other functions.
 
+```php
+    /**
+     * Initialization of core configuration
+     *
+     * @return Mage_Core_Model_Config
+     */
+    public function init($options=array())
+    {
+        $this->setCacheChecksum(null);
+        $this->_cacheLoadedSections = array();
+        $this->setOptions($options);
+        $this->loadBase();
 
-
+        $cacheLoad = $this->loadModulesCache();
+        if ($cacheLoad) {
+            return $this;
+        }
+        $this->loadModules();
+        $this->loadDb();
+        $this->saveCache();
+        return $this;
+    }
+    
+    /**
+     * Load cached modules configuration
+     *
+     * @return bool
+     */
+    public function loadModulesCache()
+    {
+        if (Mage::isInstalled(array('etc_dir' => $this->getOptions()->getEtcDir()))) {
+            if ($this->_canUseCacheForInit()) {
+                Varien_Profiler::start('mage::app::init::config::load_cache');
+                $loaded = $this->loadCache();
+                Varien_Profiler::stop('mage::app::init::config::load_cache');
+                if ($loaded) {
+                    $this->_useCache = true;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Check if cache can be used for config initialization
+     *
+     * @return bool
+     */
+    protected function _canUseCacheForInit()
+    {
+        return Mage::app()->useCache('config') && $this->_allowCacheForInit
+            && !$this->_loadCache($this->_getCacheLockId());
+    }
+```
