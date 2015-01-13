@@ -38,7 +38,7 @@ public function init($options=array())
 
 If at any point something were to silently go wrong within `loadModules` or `loadDb`, then corrupted configuration would be saved into cache, meaning that the following request would be served invalid configuration.
 
-`Mage_Core_Model_Config` also has a protected variable `$_useCache`, when this flag is set Magento will attempt to use load sections of the config from cache storage then persist them within the singleton itself.
+`Mage_Core_Model_Config` also has a protected variable `$_useCache`. When this flag is set Magento will attempt to load sections of the config from cache storage then persist them within the singleton itself.
 
 ##Symptoms of a Corrupted Config Cache##
 
@@ -102,8 +102,8 @@ This code change did not 'solve' the issue, but it did stop the website crashing
 By using apache bench to stress my Magento instance along with a lot of `file_put_contents` debugging I was able to discover that the invalid configuration was generated in the `loadDb` method of `Mage_Core_Model_Config`, but only under the following conditions
 
 1. `Mage_Core_Model_Config::init()` has been called on the singleton twice.
-2. The first call to must successfully load from cache and set `$_useCache = true`
-3. The second call must fail to retrieve the config from cache, and proceed to  incorrectly rebuild the cache because `$_useCache = true` is still set.
+2. The first call to `loadModulesCache` must successfully load from cache and set `$_useCache = true`
+3. The second call must fail to retrieve the config from cache, and proceed to incorrectly rebuild the cache because `$_useCache = true` is still set.
 
 ### Explanation ###
 To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config::init()` and a few other functions.
@@ -177,7 +177,7 @@ protected function _canUseCacheForInit()
 
 `_canUseCacheForInit` ensures the cache is enabled and that it is not locked. For some reason Magento actually uses the cache to lock itself  `$this->_loadCache($this->_getCacheLockId())`.
 
-The problem in our case was that on the second run of `Mage_Core_Model_Config::init()` we were failing the `_canUseCacheForInit` call because the cache was locked. This meant that we would proceed to regenerate and save the `CONFIG` cache while the the singletons `$_useCache` was erroneously still set to `true`.
+The problem in our case was that on the second run of `Mage_Core_Model_Config::init()` we were failing the `_canUseCacheForInit` call because the cache was locked. This meant that we would proceed to regenerate and save the `CONFIG` cache while the singletons `$_useCache` was erroneously still set to `true`.
 
 ### Cache Lock Generation ###
 
