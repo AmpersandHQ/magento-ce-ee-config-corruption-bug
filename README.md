@@ -13,27 +13,27 @@ The majority of my experimentation took place on EE 1.13.0.1 and while this bug 
 3. (On cache load failure) Load the remainder of the config from xml and the database, then save it into cache.
 
 ```php
-    /**
-     * Initialization of core configuration
-     *
-     * @return Mage_Core_Model_Config
-     */
-    public function init($options=array())
-    {
-        $this->setCacheChecksum(null);
-        $this->_cacheLoadedSections = array();
-        $this->setOptions($options);
-        $this->loadBase();
+/**
+ * Initialization of core configuration
+ *
+ * @return Mage_Core_Model_Config
+ */
+public function init($options=array())
+{
+    $this->setCacheChecksum(null);
+    $this->_cacheLoadedSections = array();
+    $this->setOptions($options);
+    $this->loadBase();
 
-        $cacheLoad = $this->loadModulesCache();
-        if ($cacheLoad) {
-            return $this;
-        }
-        $this->loadModules();
-        $this->loadDb();
-        $this->saveCache();
+    $cacheLoad = $this->loadModulesCache();
+    if ($cacheLoad) {
         return $this;
     }
+    $this->loadModules();
+    $this->loadDb();
+    $this->saveCache();
+    return $this;
+}
 ```
 
 If at any point something were to silently go wrong within `loadModules` or `loadDb`, then corrupted configuration would be saved into cache, meaning that the following request would be served invalid configuration.
@@ -59,40 +59,40 @@ I have not spent much time debugging the effects on the community edition, there
 This error only occurs when the routers configuration was loaded from cache. To stop the bug from bringing down the website and to aid my debugging I rewrote `Mage_Core_Model_Cache::save()` such that it would do some quick data validation, and prevent corrupted data being saved.
 
 ```php
-    /**
-     * Save data
-     *
-     * @param string $data
-     * @param string $id
-     * @param array $tags
-     * @param int $lifeTime
-     * @return bool
-     */
-    public function save($data, $id, $tags = array(), $lifeTime = null)
-    {
-        //Start patch for 100 routers problem
-        if (strpos($id,'config_global_stores_') !== false) {
-            $xml = new SimpleXMLElement($data);
-            $xmlPath = $xml->xpath('web/routers/standard');
-            if (count($xmlPath) != 1) {
-                //Returning true to prevent it from saving an incomplete cache entry
-                return true;
-            }
-        }
-        //End patch
-
-        if ($this->_disallowSave) {
+/**
+ * Save data
+ *
+ * @param string $data
+ * @param string $id
+ * @param array $tags
+ * @param int $lifeTime
+ * @return bool
+ */
+public function save($data, $id, $tags = array(), $lifeTime = null)
+{
+    //Start patch for 100 routers problem
+    if (strpos($id,'config_global_stores_') !== false) {
+        $xml = new SimpleXMLElement($data);
+        $xmlPath = $xml->xpath('web/routers/standard');
+        if (count($xmlPath) != 1) {
+            //Returning true to prevent it from saving an incomplete cache entry
             return true;
         }
-
-        /**
-         * Add global magento cache tag to all cached data exclude config cache
-         */
-        if (!in_array(Mage_Core_Model_Config::CACHE_TAG, $tags)) {
-            $tags[] = Mage_Core_Model_App::CACHE_TAG;
-        }
-        return $this->getFrontend()->save((string)$data, $this->_id($id), $this->_tags($tags), $lifeTime);
     }
+    //End patch
+
+    if ($this->_disallowSave) {
+        return true;
+    }
+
+    /**
+     * Add global magento cache tag to all cached data exclude config cache
+     */
+    if (!in_array(Mage_Core_Model_Config::CACHE_TAG, $tags)) {
+        $tags[] = Mage_Core_Model_App::CACHE_TAG;
+    }
+    return $this->getFrontend()->save((string)$data, $this->_id($id), $this->_tags($tags), $lifeTime);
+}
 ```
 
 This code change did not 'solve' the issue, but it did stop the website crashing so much. It was also useful as a point of debugging, as I now had a place from which I could monitor and log the issue.
@@ -108,27 +108,27 @@ By using apache bench to stress my Magento instance along with a lot of `file_pu
 To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config::init()` and a few other functions.
 
 ```php
-    /**
-     * Initialization of core configuration
-     *
-     * @return Mage_Core_Model_Config
-     */
-    public function init($options=array())
-    {
-        $this->setCacheChecksum(null);
-        $this->_cacheLoadedSections = array();
-        $this->setOptions($options);
-        $this->loadBase();
+/**
+ * Initialization of core configuration
+ *
+ * @return Mage_Core_Model_Config
+ */
+public function init($options=array())
+{
+    $this->setCacheChecksum(null);
+    $this->_cacheLoadedSections = array();
+    $this->setOptions($options);
+    $this->loadBase();
 
-        $cacheLoad = $this->loadModulesCache();
-        if ($cacheLoad) {
-            return $this;
-        }
-        $this->loadModules();
-        $this->loadDb();
-        $this->saveCache();
+    $cacheLoad = $this->loadModulesCache();
+    if ($cacheLoad) {
         return $this;
     }
+    $this->loadModules();
+    $this->loadDb();
+    $this->saveCache();
+    return $this;
+}
 ```
 
 We're interested in `$cacheLoad = $this->loadMoudulesCache()`, the first call successfully retrieved something that resolved to `true` while the second call received something that resolved to `false`. 
@@ -136,43 +136,42 @@ We're interested in `$cacheLoad = $this->loadMoudulesCache()`, the first call su
 Digging deeper into the code.
 
 ```php
-    /**
-     * Load cached modules configuration
-     *
-     * @return bool
-     */
-    public function loadModulesCache()
-    {
-        if (Mage::isInstalled(array('etc_dir' => $this->getOptions()->getEtcDir()))) {
-            if ($this->_canUseCacheForInit()) {
-                Varien_Profiler::start('mage::app::init::config::load_cache');
-                $loaded = $this->loadCache();
-                Varien_Profiler::stop('mage::app::init::config::load_cache');
-                if ($loaded) {
-                    $this->_useCache = true;
-                    return true;
-                }
+/**
+ * Load cached modules configuration
+ *
+ * @return bool
+ */
+public function loadModulesCache()
+{
+    if (Mage::isInstalled(array('etc_dir' => $this->getOptions()->getEtcDir()))) {
+        if ($this->_canUseCacheForInit()) {
+            Varien_Profiler::start('mage::app::init::config::load_cache');
+            $loaded = $this->loadCache();
+            Varien_Profiler::stop('mage::app::init::config::load_cache');
+            if ($loaded) {
+                $this->_useCache = true;
+                return true;
             }
         }
-        return false;
     }
+    return false;
+}
 ```
 `loadModulesCache` attempts to load the configuration from cache, if it is loaded it sets `$_useCache = true` and returns `true` so that we do not continue to regenerate the cache in the `init` method. The main points for this call failing would be that `loadCache` or `_canUseCacheForInit` returns `false`.
 
 Again, digging deeper into the code.
 
 ```php
-
-    /**
-     * Check if cache can be used for config initialization
-     *
-     * @return bool
-     */
-    protected function _canUseCacheForInit()
-    {
-        return Mage::app()->useCache('config') && $this->_allowCacheForInit
-            && !$this->_loadCache($this->_getCacheLockId());
-    }
+/**
+ * Check if cache can be used for config initialization
+ *
+ * @return bool
+ */
+protected function _canUseCacheForInit()
+{
+    return Mage::app()->useCache('config') && $this->_allowCacheForInit
+        && !$this->_loadCache($this->_getCacheLockId());
+}
 ```
 
 `_canUseCacheForInit` ensures the cache is enabled and that it is not locked. For some reason Magento actually uses the cache to lock itself  `$this->_loadCache($this->_getCacheLockId())`.
@@ -184,45 +183,45 @@ The problem in our case was that on the second run of `Mage_Core_Model_Config::i
 As far as I am aware the cache is locked only within the `saveCache` call of the `Mage_Core_Model_Config` singleton. The cache is locked after the configuration has been generated and before the calls to `_saveCache` which will save the config for `config_global`, `config_websites` and `config_stores_{stores}`. The cache lock is removed when all the configuration has been saved in cache.
 
 ```php
-    /**
-     * Save configuration cache
-     *
-     * @param   array $tags cache tags
-     * @return  Mage_Core_Model_Config
-     */
-    public function saveCache($tags=array())
-    {
-        if (!Mage::app()->useCache('config')) {
-            return $this;
-        }
-        if (!in_array(self::CACHE_TAG, $tags)) {
-            $tags[] = self::CACHE_TAG;
-        }
-        $cacheLockId = $this->_getCacheLockId();
-        if ($this->_loadCache($cacheLockId)) {
-            return $this;
-        }
-
-        if (!empty($this->_cacheSections)) {
-            $xml = clone $this->_xml;
-            foreach ($this->_cacheSections as $sectionName => $level) {
-                $this->_saveSectionCache($this->getCacheId(), $sectionName, $xml, $level, $tags);
-                unset($xml->$sectionName);
-            }
-            $this->_cachePartsForSave[$this->getCacheId()] = $xml->asNiceXml('', false);
-        } else {
-            return parent::saveCache($tags);
-        }
-
-        $this->_saveCache(time(), $cacheLockId, array(), 60);
-        $this->removeCache();
-        foreach ($this->_cachePartsForSave as $cacheId => $cacheData) {
-            $this->_saveCache($cacheData, $cacheId, $tags, $this->getCacheLifetime());
-        }
-        unset($this->_cachePartsForSave);
-        $this->_removeCache($cacheLockId);
+/**
+ * Save configuration cache
+ *
+ * @param   array $tags cache tags
+ * @return  Mage_Core_Model_Config
+ */
+public function saveCache($tags=array())
+{
+    if (!Mage::app()->useCache('config')) {
         return $this;
     }
+    if (!in_array(self::CACHE_TAG, $tags)) {
+        $tags[] = self::CACHE_TAG;
+    }
+    $cacheLockId = $this->_getCacheLockId();
+    if ($this->_loadCache($cacheLockId)) {
+        return $this;
+    }
+
+    if (!empty($this->_cacheSections)) {
+        $xml = clone $this->_xml;
+        foreach ($this->_cacheSections as $sectionName => $level) {
+            $this->_saveSectionCache($this->getCacheId(), $sectionName, $xml, $level, $tags);
+            unset($xml->$sectionName);
+        }
+        $this->_cachePartsForSave[$this->getCacheId()] = $xml->asNiceXml('', false);
+    } else {
+        return parent::saveCache($tags);
+    }
+
+    $this->_saveCache(time(), $cacheLockId, array(), 60);
+    $this->removeCache();
+    foreach ($this->_cachePartsForSave as $cacheId => $cacheData) {
+        $this->_saveCache($cacheData, $cacheId, $tags, $this->getCacheLifetime());
+    }
+    unset($this->_cachePartsForSave);
+    $this->_removeCache($cacheLockId);
+    return $this;
+}
 ```
 
 ### Step-By-Step ###
