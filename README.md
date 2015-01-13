@@ -103,8 +103,9 @@ By using apache bench to stress my Magento instance along with a lot of `file_pu
 
 1. `Mage_Core_Model_Config::init()` has been called on the singleton twice.
 2. The first call to must successfully load from cache and set `$_useCache = true`
-3. The second call must fail to retrieve the config from cache, and proceed to  incorrectly rebuild the cache because `$_useCache = true` is still set
+3. The second call must fail to retrieve the config from cache, and proceed to  incorrectly rebuild the cache because `$_useCache = true` is still set.
 
+### Explanation ###
 To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config::init()` and a few other functions.
 
 ```php
