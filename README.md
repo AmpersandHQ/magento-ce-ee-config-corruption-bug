@@ -56,7 +56,7 @@ I have not spent much time debugging the effects on the community edition, there
 
 [Many](http://tutorialmagento.com/fixing-front-controller-reached-100-router-match-iterations) [sources](http://www.magestore.com/magento/magento-front-controller-reached-100-router-match-iterations-error.html) [correctly](http://stackoverflow.com/questions/6262129/magento-front-controller-reached-100-router-match-iterations-error) point out that the problem is caused by some of the routers disappearing from the configuration object, meaning there is no router available to match the request.
 
-This error only occurs when the routers configuration was loaded from cache. To stop the bug from bringing down the website and to aid my debugging I rewrote `Mage_Core_Model_Cache::save()` such that it would do some quick data validation, and prevent corrupted data being saved.
+This error only occurs when the routers configuration was loaded from cache. To stop the bug from bringing down the website and to aid my debugging I overrode `Mage_Core_Model_Cache::save()` such that it would do some quick data validation, and prevent corrupted data being saved.
 
 ```php
 /**
@@ -257,7 +257,7 @@ I was unable to easily reproduce the time sensitive cache hit on `global_config.
 
 2 weeks of work and all this for a 1 line fix.
 
-By forcing `$_useCache = false` when regenerating the config we were able to completely stop this bug from occurring in our instances.
+I overrode `Mage_Core_Model_Config` and forced `$_useCache = false` when regenerating the config. This fix is validated by the replication script above, and completely stopped this bug from occurring in our instances.
 
 ```php
 /**
@@ -276,7 +276,9 @@ public function init($options=array())
     if ($cacheLoad) {
         return $this;
     }
+    //100 Router Fix Start
     $this->_useCache = false;
+    //100 Router Fix End
     $this->loadModules();
     $this->loadDb();
     $this->saveCache();
