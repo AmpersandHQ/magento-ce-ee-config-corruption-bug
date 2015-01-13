@@ -38,11 +38,9 @@ The majority of my experimentation took place on EE 1.13.0.1 and while this bug 
 
 If at any point something were to silently go wrong within `loadModules` or `loadDb`, then corrupted configuration would be saved into cache, meaning that the following request would be served invalid configuration.
 
-`Mage_Core_Model_Config` also has a protected variable `$_useCache`, when this flag is set Magento will attempt to use load sections of the config from cache storage then persist them within the singleton itself. 
+`Mage_Core_Model_Config` also has a protected variable `$_useCache`, when this flag is set Magento will attempt to use load sections of the config from cache storage then persist them within the singleton itself.
 
-This logic is underpinned by the `_getSectionConfig` function.
-
-##Symptoms##
+##Symptoms of a Corrupted Config Cache##
 
 The following symptoms would usually manifest when the website is experiencing high load, and very often after a cache flush was triggered. The symptoms persist until you flush the `CONFIG` cache.
 
@@ -101,7 +99,7 @@ This code change did not 'solve' the issue, but it did stop the website crashing
 
 ## The Problem ##
 
-By using apache bench to stress my Magento instance along with a lot of `file_put_contents` debugging, I was able to discover that the invalid configuration was generated in the `loadDb` method of `Mage_Core_Model_Config`, but only under the following conditions
+By using apache bench to stress my Magento instance along with a lot of `file_put_contents` debugging I was able to discover that the invalid configuration was generated in the `loadDb` method of `Mage_Core_Model_Config`, but only under the following conditions
 
 1. `Mage_Core_Model_Config::init()` has been called on the singleton twice.
 2. The first call to must successfully load from cache and set `$_useCache = true`
@@ -159,7 +157,7 @@ Digging deeper into the code.
         return false;
     }
 ```
-`loadModulesCache` attempts to load the configuration from cache, if it is loaded it sets `$_useCache = true` and returns `true` so that we do not continue to regenerate the cache. The main points for this failing would be that `loadCache` or `_canUseCacheForInit` returns `false`.
+`loadModulesCache` attempts to load the configuration from cache, if it is loaded it sets `$_useCache = true` and returns `true` so that we do not continue to regenerate the cache in the `init` method. The main points for this call failing would be that `loadCache` or `_canUseCacheForInit` returns `false`.
 
 Again, digging deeper into the code.
 
@@ -177,11 +175,13 @@ Again, digging deeper into the code.
     }
 ```
 
-`_canUseCacheForInit`  ensures the cache is enabled and that it is not locked. For some reason Magento actually uses the cache to lock itself  `$this->_loadCache($this->_getCacheLockId())`.
+`_canUseCacheForInit` ensures the cache is enabled and that it is not locked. For some reason Magento actually uses the cache to lock itself  `$this->_loadCache($this->_getCacheLockId())`.
 
-The problem in our case, was that on the second run of `Mage_Core_Model_Config::init()` we were failing the `_canUseCacheForInit` call because the cache was locked, meaning we were not able to load the config from cache, but still had `$_useCache = true` set in the object.
+The problem in our case was that on the second run of `Mage_Core_Model_Config::init()` we were failing the `_canUseCacheForInit` call because the cache was locked. This meant that we would proceed to regenerate and save the `CONFIG` cache while the the singletons `$_useCache` was erroneously still set to `true`.
 
 ### Cache Lock Generation ###
+
+As far as I am aware the cache is locked only within the `saveCache` call of the `Mage_Core_Model_Config` singleton. The cache is locked after the configuration has been generated and before the calls to `_saveCache` which will save the config for `config_global`, `config_websites` and `config_stores_{stores}`. The cache lock is removed when all the configuration has been saved in cache.
 
 ```php
     /**
@@ -224,3 +224,8 @@ The problem in our case, was that on the second run of `Mage_Core_Model_Config::
         return $this;
     }
 ```
+
+### Step-By-Step ###
+
+What was happening was likely due to the shared cache storage between multiple servers, but could also have been caused by multiple processes running on one server.
+
