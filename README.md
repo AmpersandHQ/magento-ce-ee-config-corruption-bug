@@ -177,9 +177,9 @@ Again, digging deeper into the code.
     }
 ```
 
-`_canUseCacheForInit`  ensures the cache is enabled and that it is not locked, for some reason Magento actually uses the cache to lock itself  (`$this->_loadCache($this->_getCacheLockId())`).
+`_canUseCacheForInit`  ensures the cache is enabled and that it is not locked. For some reason Magento actually uses the cache to lock itself  `$this->_loadCache($this->_getCacheLockId())`.
 
-The problem in our case, was that on the second run of `Mage_Core_Model_Config::init()` we were failing the `_canUseCacheForInit` call, meaning we were not able to load the config from cache, but still had `$_useCache = true` set in the object.
+The problem in our case, was that on the second run of `Mage_Core_Model_Config::init()` we were failing the `_canUseCacheForInit` call because the cache was locked, meaning we were not able to load the config from cache, but still had `$_useCache = true` set in the object.
 
 ### Cache Lock Generation ###
 
