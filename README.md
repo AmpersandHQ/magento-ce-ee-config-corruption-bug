@@ -229,3 +229,17 @@ public function saveCache($tags=array())
 
 What was happening was likely due to the shared cache storage between multiple servers, but could also have been caused by multiple processes running on one server.
 
+Here's a step-by-step of what was happening in our instance, we had a cronjob which was calling `Mage::app()->init()` multiple times which accounted for the repeated initialisation of `Mage_Core_Model_Config`.
+
+|Time   |Process 1   |Process 2   | Shared Cache Lock   |
+|---|---|---|---|
+|1   | `init()` - `loadModulesCache` succeeds and sets `$_useCache = true`. |  -  |   |
+|2   | Some code is executed | `init()` - `loadModulesCache` fails because someone has hit Flush Cache in the admin panel  |   |
+|3   |  Some code is executed | `init()` - `loadModules`, `loadDb` work as expected.  |   |
+|4   | Some code calls `Mage::app()->init()`  | `init()` - `saveCache` is initiated  |   |
+|5   | `Mage::app()->init()` calls `Mage_Core_Model_Config::init()`  | `saveCache()` - sets the cache lock | LOCKED  |
+|6   | `init()` - `loadModulesCache` fails as cache lock is present | `saveCache()` - saves config to cache  | LOCKED  |
+|7   | `init()` - calls `loadModules` and `loadDb` with `$_useCache = true`, generated invalid config | `saveCache()` - removes the cache lock, `init` completes. |   |
+|7   |  `init()` - calls `saveCache` with incorrectly generated data, causing the errors. | Some code is executed |   |
+
+
