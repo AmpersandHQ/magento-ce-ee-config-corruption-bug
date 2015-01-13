@@ -133,7 +133,7 @@ To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config
     }
 ```
 
-We're interested in `$cacheLoad = $this->loadMoudulesCache();`, the first call successfully retrieved something that resolved to `true` while the second call received something that resolved to `false`. 
+We're interested in `$cacheLoad = $this->loadMoudulesCache()`, the first call successfully retrieved something that resolved to `true` while the second call received something that resolved to `false`. 
 
 Digging deeper into the code.
 
@@ -159,7 +159,7 @@ Digging deeper into the code.
         return false;
     }
 ```
-`loadModulesCache` attempts to load the configuration from cache, if it is loaded it sets `$_useCache = true` and returns `true` so that we do not continue to regenerate the cache. 
+`loadModulesCache` attempts to load the configuration from cache, if it is loaded it sets `$_useCache = true` and returns `true` so that we do not continue to regenerate the cache. The main points for this failing would be that `loadCache` or `_canUseCacheForInit` returns `false`.
 
 Again, digging deeper into the code.
 
@@ -177,4 +177,50 @@ Again, digging deeper into the code.
     }
 ```
 
-`_canUseCacheForInit` is the method that wraps around the `loadCache` call, it ensures the cache is enabled and that it is not locked. For some reason Magento actually uses the cache to lock itself  (`$this->_loadCache($this->_getCacheLockId())`).
+`_canUseCacheForInit`  ensures the cache is enabled and that it is not locked, for some reason Magento actually uses the cache to lock itself  (`$this->_loadCache($this->_getCacheLockId())`).
+
+The problem in our case, was that on the second run of `Mage_Core_Model_Config::init()` we were failing the `_canUseCacheForInit` call, meaning we were not able to load the config from cache, but still had `$_useCache = true` set in the object.
+
+### Cache Lock Generation ###
+
+```php
+    /**
+     * Save configuration cache
+     *
+     * @param   array $tags cache tags
+     * @return  Mage_Core_Model_Config
+     */
+    public function saveCache($tags=array())
+    {
+        if (!Mage::app()->useCache('config')) {
+            return $this;
+        }
+        if (!in_array(self::CACHE_TAG, $tags)) {
+            $tags[] = self::CACHE_TAG;
+        }
+        $cacheLockId = $this->_getCacheLockId();
+        if ($this->_loadCache($cacheLockId)) {
+            return $this;
+        }
+
+        if (!empty($this->_cacheSections)) {
+            $xml = clone $this->_xml;
+            foreach ($this->_cacheSections as $sectionName => $level) {
+                $this->_saveSectionCache($this->getCacheId(), $sectionName, $xml, $level, $tags);
+                unset($xml->$sectionName);
+            }
+            $this->_cachePartsForSave[$this->getCacheId()] = $xml->asNiceXml('', false);
+        } else {
+            return parent::saveCache($tags);
+        }
+
+        $this->_saveCache(time(), $cacheLockId, array(), 60);
+        $this->removeCache();
+        foreach ($this->_cachePartsForSave as $cacheId => $cacheData) {
+            $this->_saveCache($cacheData, $cacheId, $tags, $this->getCacheLifetime());
+        }
+        unset($this->_cachePartsForSave);
+        $this->_removeCache($cacheLockId);
+        return $this;
+    }
+```
