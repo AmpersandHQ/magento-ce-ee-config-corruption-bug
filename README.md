@@ -248,7 +248,7 @@ Here's a step-by-step of what was happening in our instance, we had a cronjob wh
 If you have a look at `100-router-script.php` you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it.
 
 ```
-    php replicate.php
+    php 100-router-script.php
 ```
 
 I was unable to easily reproduce the time sensitive cache hit on `global_config.lock`, however I was able to emulate it by making `loadModulesCache` fail to load `config_global` on the second call.
