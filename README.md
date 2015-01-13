@@ -243,3 +243,47 @@ Here's a step-by-step of what was happening in our instance, we had a cronjob wh
 |7   |  `init()` - calls `saveCache` with incorrectly generated data, causing the errors. | Some code is executed |   |
 
 
+# Replication #
+
+If you have a look at `100-router-script.php` you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it.
+
+```
+    php replicate.php
+```
+
+I was unable to easily reproduce the time sensitive cache hit on `global_config.lock`, however I was able to emulate it by making `loadModulesCache` fail to load `config_global` on the second call.
+
+# The Fix #
+
+2 weeks of work and all this for a 1 line fix.
+
+By forcing `$_useCache = false` when regenerating the config we were able to completely stop this bug from occurring in our instances.
+
+```php
+/**
+ * Initialization of core configuration
+ *
+ * @return Mage_Core_Model_Config
+ */
+public function init($options=array())
+{
+    $this->setCacheChecksum(null);
+    $this->_cacheLoadedSections = array();
+    $this->setOptions($options);
+    $this->loadBase();
+
+    $cacheLoad = $this->loadModulesCache();
+    if ($cacheLoad) {
+        return $this;
+    }
+    $this->_useCache = false;
+    $this->loadModules();
+    $this->loadDb();
+    $this->saveCache();
+    return $this;
+}
+```
+
+## Performance ##
+
+I do not believe that this fix will affect performance in any negative way as the usual flow for `loadModules`, `loadDb` and `saveCache` is for `$_useCache` to be `false`.
