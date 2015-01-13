@@ -105,7 +105,7 @@ By using apache bench to stress my Magento instance along with a lot of `file_pu
 
 1. `Mage_Core_Model_Config::init()` has been called on the singleton twice.
 2. The first call to must successfully load from cache and set `$_useCache = true`
-3. The second call must fail to retrieve the config from cache, and proceed to rebuild the cache while still having `$_useCache = true`
+3. The second call must fail to retrieve the config from cache, and proceed to  incorrectly rebuild the cache because `$_useCache = true` is still set
 
 To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config::init()` and a few other functions.
 
@@ -131,7 +131,13 @@ To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config
         $this->saveCache();
         return $this;
     }
-    
+```
+
+We're interested in `$cacheLoad = $this->loadMoudulesCache();`, the first call successfully retrieved something that resolved to `true` while the second call received something that resolved to `false`. 
+
+Digging deeper into the code.
+
+```php
     /**
      * Load cached modules configuration
      *
@@ -152,7 +158,13 @@ To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config
         }
         return false;
     }
-    
+```
+`loadModulesCache` attempts to load the configuration from cache, if it is loaded it sets `$_useCache = true` and returns `true` so that we do not continue to regenerate the cache. 
+
+Again, digging deeper into the code.
+
+```php
+
     /**
      * Check if cache can be used for config initialization
      *
@@ -164,3 +176,5 @@ To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config
             && !$this->_loadCache($this->_getCacheLockId());
     }
 ```
+
+`_canUseCacheForInit` is the method that wraps around the `loadCache` call, it ensures the cache is enabled and that it is not locked. For some reason Magento actually uses the cache to lock itself  (`$this->_loadCache($this->_getCacheLockId())`).
