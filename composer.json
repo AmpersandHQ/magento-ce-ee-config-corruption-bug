@@ -1,5 +1,5 @@
 {
-	"name": "ampersand/config-corruption",
+	"name": "ampersand/magento-ce-ee-config-corruption-bug",
 	"description": "Unit tests to prove the 100 router config error",
 	"license": "OSL-3.0",
 	"require": {
