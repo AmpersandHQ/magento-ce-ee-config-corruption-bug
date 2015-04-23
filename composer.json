@@ -1,0 +1,8 @@
+{
+	"name": "ampersand/config-corruption",
+	"description": "Unit tests to prove the 100 router config error",
+	"license": "OSL-3.0",
+	"require": {
+	 	"phpunit/phpunit": "~4.1"
+	}
+}
