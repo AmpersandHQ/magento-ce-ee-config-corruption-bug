@@ -253,6 +253,16 @@ If you have a look at `100-router-script.php` you can see a simple script which 
 
 I was unable to easily reproduce the time sensitive cache hit on `global_config.lock`, however I was able to emulate it by making `loadModulesCache` fail to load `config_global` on the second call.
 
+# PHPUnit Tests #
+
+```
+MAGE_PATH="/path/to/magento/app/Mage.php" vendor/bin/phpunit
+```
+
+Run the unit tests by specifying an environment variable pointing your Magento installation.
+
+
+
 # The Fix #
 
 2 weeks of work and all this for a 1 line fix.
