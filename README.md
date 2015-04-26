@@ -263,11 +263,6 @@ DO NOT use on a production environment!
 2
 1
 Done
-
-```
-
-```
-    php 100-router-script.php
 ```
 
 I was unable to easily reproduce the time sensitive cache hit on `global_config.lock`, however I was able to emulate it by making `loadModulesCache` fail to load `config_global` on the second call.
