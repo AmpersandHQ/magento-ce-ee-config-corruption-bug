@@ -286,8 +286,12 @@ Run the unit tests by specifying an environment variable pointing your Magento i
 On an unpatched instance you should see the following output
 
 ```
+git clone https://github.com/AmpersandHQ/magento-ce-ee-config-corruption-bug.git
+composer install
 MAGE_PATH="/path/to/magento/app/Mage.php" vendor/bin/phpunit
+```
 
+```
 PHPUnit 4.6.4 by Sebastian Bergmann and contributors.
 
 Configuration read from /lukerodgers.co.uk/magento-ce-ee-config-corruption-bug/phpunit.xml
