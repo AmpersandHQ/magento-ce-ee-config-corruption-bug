@@ -279,7 +279,7 @@ I was unable to easily reproduce the time sensitive cache hit on `global_config.
 
 # PHPUnit Tests #
 
-The phpunit tests simulate the time sensitive cache hit on `global_config.lock` by using `Convenient_Core_Model_Config`. This is a custom configuration model which returns `true` for the second call to `loadCache` for the `config_global.lock` entry. All other functionality is untouched.
+The phpunit tests simulate the time sensitive cache hit on `global_config.lock` by using [`Convenient_Core_Model_Config`](blob/master/lib/Convenient/Core/Model/Config.php). This is a custom configuration model which returns `true` for the second call to `loadCache` for the `config_global.lock` entry. All other functionality is untouched.
 
 Run the unit tests by specifying an environment variable pointing your Magento installation.
 
