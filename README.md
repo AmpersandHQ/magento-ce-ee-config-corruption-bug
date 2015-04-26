@@ -269,13 +269,40 @@ I was unable to easily reproduce the time sensitive cache hit on `global_config.
 
 # PHPUnit Tests #
 
-```
-MAGE_PATH="/path/to/magento/app/Mage.php" vendor/bin/phpunit
-```
+The phpunit tests simulate the time sensitive cache hit on `global_config.lock` by using `Convenient_Core_Model_Config`. This is a custom configuration model which returns `true` for the second call to `loadCache` for the `config_global.lock` entry. All other functionality is untouched.
 
 Run the unit tests by specifying an environment variable pointing your Magento installation.
 
+On an unpatched instance you should see the following output
 
+```
+MAGE_PATH="/path/to/magento/app/Mage.php" vendor/bin/phpunit
+
+PHPUnit 4.6.4 by Sebastian Bergmann and contributors.
+
+Configuration read from /lukerodgers.co.uk/magento-ce-ee-config-corruption-bug/phpunit.xml
+
+F
+
+Time: 1.76 seconds, Memory: 12.75Mb
+
+There was 1 failure:
+
+1) ConfigurationTest::testReinit
+Failed asserting that two strings are equal.
+```
+
+On a patched instance you should see:
+
+```
+Configuration read from /lukerodgers.co.uk/magento-ce-ee-config-corruption-bug/phpunit.xml
+
+.
+
+Time: 2.69 seconds, Memory: 13.75Mb
+
+OK (1 test, 1 assertion)
+```
 
 # The Fix #
 
