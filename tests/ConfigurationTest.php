@@ -1,5 +1,5 @@
 <?php
-class TestTest extends PHPUnit_Framework_TestCase
+class ConfigurationTest extends PHPUnit_Framework_TestCase
 {
     protected $cacheTypesEnabled;
 
