@@ -46,8 +46,16 @@ class TestTest extends PHPUnit_Framework_TestCase
         Mage::reset();
 
         /**
+         * Get a copy of the stores/default/web configuration from the warmed up cache
+         */
+        $before = Mage::app()->getCacheInstance()->load('config_global_stores');
+        $before = new Varien_Simplexml_Element($before);
+        $before = $before->descend('default/web')->asXML();
+
+        /**
          * Initialise Mage with our custom config module which alternates between hitting a fake cache lock
          */
+        Mage::reset();
         Mage::app(
             Mage_Core_Model_App::ADMIN_STORE_ID,
             'store',
@@ -61,7 +69,13 @@ class TestTest extends PHPUnit_Framework_TestCase
         Mage::app()->init(Mage_Core_Model_App::ADMIN_STORE_ID, 'STORE');
 
         /**
-         * @todo, find something to assert
+         * Get a copy of the stores/default/web configuration from the corrupted cache
          */
+        Mage::reset();
+        $after = Mage::app()->getCacheInstance()->load('config_global_stores');
+        $after = new Varien_Simplexml_Element($after);
+        $after = $after->descend('default/web')->asXML();
+
+        $this->assertEquals($before, $after);
     }
 }
