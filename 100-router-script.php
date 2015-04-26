@@ -1,5 +1,31 @@
 <?php
-require_once(dirname(__FILE__) . '/app/Mage.php');
+$path = getenv("MAGE_PATH");
+if (!file_exists($path)) {
+    $path = dirname(__FILE__) . '/app/Mage.php';
+}
+
+require_once($path);
+
+echo "This replication script is about to disable all your caches except for CONFIG cache\n";
+echo "It will not restore them\n";
+echo "DO NOT use on a production environment!\n";
+
+for ($i=10; $i>0; $i--) {
+    echo $i."\n";
+    sleep(1);
+}
+
+$caches = array();
+foreach (Mage::app()->useCache() as $type => $status) {
+    $status = 0;
+    if ($type == 'config') {
+        $status = 1;
+    }
+    $caches[$type] = $status;
+}
+
+Mage::app()->saveUseCache($caches);
+Mage::reset();
 
 if (!Mage::app()->useCache('config')) {
     die("Config cache needs to be enabled.");
