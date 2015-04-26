@@ -245,7 +245,26 @@ Here's a step-by-step of what was happening in our instance, we had a cronjob wh
 
 # Replication #
 
-If you have a look at `100-router-script.php` you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it.
+If you have a look at `100-router-script.php` you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it. Alternatively you can specify the location of `Mage.php` using an environment variable.
+
+```
+MAGE_PATH="/lukerodgers.co.uk/builds/1_9_1_0/app/Mage.php" php 100-router-script.php 
+This replication script is about to disable all your caches except for CONFIG cache
+It will not restore them
+DO NOT use on a production environment!
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+Done
+
+```
 
 ```
     php 100-router-script.php

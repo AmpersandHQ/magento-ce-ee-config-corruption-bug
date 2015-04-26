@@ -62,3 +62,4 @@ Mage::app()->init(Mage_Core_Model_App::ADMIN_STORE_ID, 'store');
 /**
  * Reload a non FPC page, you should see a 100 router match iteration page / no 404 page
  */
+echo "Done\n";
