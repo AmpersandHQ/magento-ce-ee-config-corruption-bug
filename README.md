@@ -1,6 +1,16 @@
 # Magento Bug - Corrupted Config Cache 
 
 http://ampersandcommerce.com 
+
+1. [Preface](#preface)
+2. [`Mage_Core_Model_Config` and Caching](#mage_core_model_config-and-caching)
+3. [Symptoms of a Corrupted Config Cache](#symptoms-of-a-corrupted-config-cache)
+4. [Debugging the Issue](#debugging-the-issue)
+5. [The Problem & Explanation](#the-problem)
+6. [Replication](#replication)
+7. [PHPUnit Tests](#phpunit-tests)
+8. [The Fix](#the-fix)
+
 ##Preface##
 The majority of my experimentation took place on EE 1.13.0.1 and while this bug does also affect CE 1.9.1.0 I will be referring to EE 1.13.0.1 code throughout the explanation.
 
