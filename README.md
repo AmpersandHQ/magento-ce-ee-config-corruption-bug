@@ -273,13 +273,12 @@ These tests enable the `CONFIG` cache.
 
 Run the unit tests by specifying an environment variable pointing your Magento installation.
 
-On an unpatched instance you should see the following output
-
 ```
 git clone https://github.com/AmpersandHQ/magento-ce-ee-config-corruption-bug.git
 composer install
 MAGE_PATH="/path/to/magento/app/Mage.php" vendor/bin/phpunit
 ```
+On an unpatched instance you should see the following output
 ```
 PHPUnit 4.6.4 by Sebastian Bergmann and contributors.
 
