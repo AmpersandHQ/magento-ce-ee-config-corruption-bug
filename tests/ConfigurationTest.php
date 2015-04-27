@@ -1,8 +1,6 @@
 <?php
 class ConfigurationTest extends PHPUnit_Framework_TestCase
 {
-    protected $cacheTypesEnabled;
-
     /**
      *
      * @author Luke Rodgers <lr@amp.co>
@@ -45,7 +43,7 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
         Mage::reset();
 
         /**
-         * Get a copy of the stores/default/web configuration from the warmed up cache
+         * Get a copy of the admin configuration from the warmed up cache
          */
         $before = Mage::app()->getCacheInstance()->load('config_global_stores');
         $before = new Varien_Simplexml_Element($before);
@@ -68,7 +66,7 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
         Mage::app()->init(Mage_Core_Model_App::ADMIN_STORE_ID, 'store');
 
         /**
-         * Get a copy of the stores/default/web configuration from the corrupted cache
+         * Get a copy of the admin configuration from the corrupted cache
          */
         Mage::reset();
         $after = Mage::app()->getCacheInstance()->load('config_global_stores');
@@ -91,7 +89,7 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
         Mage::reset();
 
         /**
-         * Get a copy of the stores/default/web configuration from the warmed up cache
+         * Get a copy of the admin configuration from the warmed up cache
          */
         $before = Mage::app()->getCacheInstance()->load('config_global_stores');
         $before = new Varien_Simplexml_Element($before);
@@ -111,7 +109,7 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
         Mage::app()->init(Mage_Core_Model_App::ADMIN_STORE_ID, 'store');
 
         /**
-         * Get a copy of the stores/default/web configuration from the corrupted cache
+         * Get a copy of the admin configuration from the corrupted cache
          */
         Mage::reset();
         $after = Mage::app()->getCacheInstance()->load('config_global_stores');
