@@ -265,7 +265,7 @@ I was unable to easily reproduce the time sensitive cache hit on `global_config.
 
 # PHPUnit Tests #
 
-The phpunit tests simulate the time sensitive cache hit on `global_config.lock` in two different ways:
+The [phpunit tests](/tests/ConfigurationTest.php) simulate the time sensitive cache hit on `global_config.lock` in two different ways:
 * By using [`Convenient_Core_Model_Config`](/lib/Convenient/Core/Model/Config.php), a custom configuration model which returns `true` for the second call to `loadCache` for the `config_global.lock` entry.
 * By removing `config_global` from the cache as in the `100-router-script.php` file.
 
@@ -273,13 +273,12 @@ These tests enable the `CONFIG` cache.
 
 Run the unit tests by specifying an environment variable pointing your Magento installation.
 
-On an unpatched instance you should see the following output
-
 ```
 git clone https://github.com/AmpersandHQ/magento-ce-ee-config-corruption-bug.git
 composer install
 MAGE_PATH="/path/to/magento/app/Mage.php" vendor/bin/phpunit
 ```
+On an unpatched instance you should see the following output
 ```
 PHPUnit 4.6.4 by Sebastian Bergmann and contributors.
 
