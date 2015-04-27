@@ -1,6 +1,16 @@
 # Magento Bug - Corrupted Config Cache 
 
 http://ampersandcommerce.com 
+
+1. [Preface](#preface)
+2. [`Mage_Core_Model_Config` and Caching](#mage_core_model_config-and-caching)
+3. [Symptoms of a Corrupted Config Cache](#symptoms-of-a-corrupted-config-cache)
+4. [Debugging the Issue](#debugging-the-issue)
+5. [The Problem & Explanation](#the-problem)
+6. [Replication](#replication)
+7. [PHPUnit Tests](#phpunit-tests)
+8. [The Fix](#the-fix)
+
 ##Preface##
 The majority of my experimentation took place on EE 1.13.0.1 and while this bug does also affect CE 1.9.1.0 I will be referring to EE 1.13.0.1 code throughout the explanation.
 
@@ -245,19 +255,72 @@ Here's a step-by-step of what was happening in our instance, we had a cronjob wh
 
 # Replication #
 
-If you have a look at `100-router-script.php` you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it.
+If you have a look at [`100-router-script.php`](/100-router-script.php) you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it. Alternatively you can specify the location of `Mage.php` using an environment variable.
 
 ```
-    php 100-router-script.php
+MAGE_PATH="/path/to/magento/app/Mage.php" php 100-router-script.php
 ```
 
 I was unable to easily reproduce the time sensitive cache hit on `global_config.lock`, however I was able to emulate it by making `loadModulesCache` fail to load `config_global` on the second call.
+
+# PHPUnit Tests #
+
+The [phpunit tests](/tests/ConfigurationTest.php) simulate the time sensitive cache hit on `global_config.lock` in two different ways:
+* By using [`Convenient_Core_Model_Config`](/lib/Convenient/Core/Model/Config.php), a custom configuration model which returns `true` for the second call to `loadCache` for the `config_global.lock` entry.
+* By removing `config_global` from the cache as in the `100-router-script.php` file.
+
+These tests enable the `CONFIG` cache.
+
+Run the unit tests by specifying an environment variable pointing your Magento installation.
+
+```
+git clone https://github.com/AmpersandHQ/magento-ce-ee-config-corruption-bug.git
+composer install
+MAGE_PATH="/path/to/magento/app/Mage.php" vendor/bin/phpunit
+```
+On an unpatched instance you should see the following output
+```
+PHPUnit 4.6.4 by Sebastian Bergmann and contributors.
+
+Configuration read from /lukerodgers.co.uk/magento-ce-ee-config-corruption-bug/phpunit.xml
+
+FF
+
+Time: 2.53 seconds, Memory: 16.25Mb
+
+There were 2 failures:
+
+1) ConfigurationTest::reinitWithAlternativeConfigModel
+Failed asserting that two strings are equal.
+
+/lukerodgers.co.uk/magento-ce-ee-config-corruption-bug/tests/ConfigurationTest.php:78
+
+2) ConfigurationTest::reinitMissingCacheEntry
+Failed asserting that two strings are equal.
+
+/lukerodgers.co.uk/magento-ce-ee-config-corruption-bug/tests/ConfigurationTest.php:121
+
+```
+
+On a patched instance you should see:
+
+```
+PHPUnit 4.6.4 by Sebastian Bergmann and contributors.
+
+Configuration read from /lukerodgers.co.uk/magento-ce-ee-config-corruption-bug/phpunit.xml
+
+..
+
+Time: 2.87 seconds, Memory: 16.50Mb
+
+OK (2 tests, 2 assertions)
+```
 
 # The Fix #
 
 2 weeks of work and all this for a 1 line fix.
 
-I overrode `Mage_Core_Model_Config` and forced `$_useCache = false` when regenerating the config. This fix is validated by the replication script above, and completely stopped this bug from occurring in our instances.
+I overrode `Mage_Core_Model_Config` and forced `$_useCache = false` when regenerating the config. This fix is validated by the replication script/phpunit tests above, and completely stopped this bug from occurring in our instances.
 
 ```php
 /**

@@ -1,5 +1,21 @@
 <?php
-require_once(dirname(__FILE__) . '/app/Mage.php');
+$path = getenv("MAGE_PATH");
+if (!file_exists($path)) {
+    $path = dirname(__FILE__) . '/app/Mage.php';
+}
+
+require_once($path);
+
+$caches = array();
+foreach (Mage::app()->useCache() as $type => $status) {
+    if ($type == 'config') {
+        $status = 1;
+    }
+    $caches[$type] = $status;
+}
+
+Mage::app()->saveUseCache($caches);
+Mage::reset();
 
 if (!Mage::app()->useCache('config')) {
     die("Config cache needs to be enabled.");
@@ -36,3 +52,4 @@ Mage::app()->init(Mage_Core_Model_App::ADMIN_STORE_ID, 'store');
 /**
  * Reload a non FPC page, you should see a 100 router match iteration page / no 404 page
  */
+echo "Done\n";

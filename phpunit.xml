@@ -1,0 +1,7 @@
+<phpunit backupGlobals="false" colors="true" bootstrap="bootstrap.php" syntaxCheck="true">
+    <testsuites>
+        <testsuite name="Magento Bug - Corrupted Config Cache - Test Suite">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
