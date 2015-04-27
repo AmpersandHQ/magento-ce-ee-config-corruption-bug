@@ -6,18 +6,8 @@ if (!file_exists($path)) {
 
 require_once($path);
 
-echo "This replication script is about to disable all your caches except for CONFIG cache\n";
-echo "It will not restore them\n";
-echo "DO NOT use on a production environment!\n";
-
-for ($i=10; $i>0; $i--) {
-    echo $i."\n";
-    sleep(1);
-}
-
 $caches = array();
 foreach (Mage::app()->useCache() as $type => $status) {
-    $status = 0;
     if ($type == 'config') {
         $status = 1;
     }

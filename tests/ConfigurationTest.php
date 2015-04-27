@@ -10,12 +10,11 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
     public function setUp()
     {
         /**
-         * Disable all caches except config
+         * Enable config cache
          */
         $caches = array();
 
         foreach (Mage::app()->useCache() as $type => $status) {
-            $status = 0;
             if ($type == 'config') {
                 $status = 1;
             }
