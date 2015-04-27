@@ -255,7 +255,7 @@ Here's a step-by-step of what was happening in our instance, we had a cronjob wh
 
 # Replication #
 
-If you have a look at `100-router-script.php` you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it. Alternatively you can specify the location of `Mage.php` using an environment variable.
+If you have a look at [`100-router-script.php`](/100-router-script.php) you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it. Alternatively you can specify the location of `Mage.php` using an environment variable.
 
 ```
 MAGE_PATH="/path/to/magento/app/Mage.php" php 100-router-script.php
