@@ -265,7 +265,7 @@ I was unable to easily reproduce the time sensitive cache hit on `global_config.
 
 # PHPUnit Tests #
 
-The phpunit tests simulate the time sensitive cache hit on `global_config.lock` in two different ways:
+The [phpunit tests](/tests/ConfigurationTest.php) simulate the time sensitive cache hit on `global_config.lock` in two different ways:
 * By using [`Convenient_Core_Model_Config`](/lib/Convenient/Core/Model/Config.php), a custom configuration model which returns `true` for the second call to `loadCache` for the `config_global.lock` entry.
 * By removing `config_global` from the cache as in the `100-router-script.php` file.
 
