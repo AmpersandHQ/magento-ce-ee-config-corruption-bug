@@ -50,7 +50,7 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
          */
         $before = Mage::app()->getCacheInstance()->load('config_global_stores');
         $before = new Varien_Simplexml_Element($before);
-        $before = $before->descend('default/web')->asXML();
+        $before = $before->descend('admin')->asXML();
 
         /**
          * Initialise Mage with our custom config module which alternates between hitting a fake cache lock
@@ -74,9 +74,8 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
         Mage::reset();
         $after = Mage::app()->getCacheInstance()->load('config_global_stores');
         $after = new Varien_Simplexml_Element($after);
-        $after = $after->descend('default/web')->asXML();
+        $after = $after->descend('admin')->asXML();
 
-        //For community edition
         $this->assertEquals($before, $after);
     }
 
@@ -97,7 +96,7 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
          */
         $before = Mage::app()->getCacheInstance()->load('config_global_stores');
         $before = new Varien_Simplexml_Element($before);
-        $before = $before->descend('default/web')->asXML();
+        $before = $before->descend('admin')->asXML();
 
         /**
          * Initialise Mage and remove config_global from the cache, to simulate hitting a fake cache lock
@@ -118,9 +117,8 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase
         Mage::reset();
         $after = Mage::app()->getCacheInstance()->load('config_global_stores');
         $after = new Varien_Simplexml_Element($after);
-        $after = $after->descend('default/web')->asXML();
+        $after = $after->descend('admin')->asXML();
 
-        //For community edition
         $this->assertEquals($before, $after);
     }
 }
