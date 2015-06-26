@@ -11,6 +11,8 @@ http://ampersandcommerce.com
 7. [PHPUnit Tests](#phpunit-tests)
 8. [The Fix](#the-fix)
 
+If this document helps you out then please give it a star, thanks!
+
 ##Preface##
 The majority of my experimentation took place on EE 1.13.0.1 and while this bug does also affect CE 1.9.1.0 I will be referring to EE 1.13.0.1 code throughout the explanation.
 
