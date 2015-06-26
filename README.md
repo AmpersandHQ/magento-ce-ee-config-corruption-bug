@@ -14,6 +14,8 @@ http://ampersandcommerce.com
 ##Preface##
 The majority of my experimentation took place on EE 1.13.0.1 and while this bug does also affect CE 1.9.1.0 I will be referring to EE 1.13.0.1 code throughout the explanation.
 
+If this document helps you out then please give it a star, thanks!
+
 ##`Mage_Core_Model_Config` and Caching##
 
 `Mage_Core_Model_Config` is the class responsible for merging all the system configuration files (config.xml, local.xml) and module configuration files (config.xml) into one object. There are 3 basic parts to the `Mage_Core_Model_Config::init()` call
