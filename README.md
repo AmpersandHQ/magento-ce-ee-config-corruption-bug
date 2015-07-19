@@ -355,7 +355,7 @@ public function init($options=array())
 }
 ```
 
-It would be naive of me to believe that this will completley solve the issue for everyones Magento setup. If it does not work for you then I recommend you 
+It would be naive of me to believe that this will completely solve the issue for everyones Magento setup. If it does not work for you then I recommend you 
 
 1. Implement the logic mentioned in the [ Debugging the Issue](#debugging-the-issue) section.
 2. Wait for some log data to appear.
