@@ -87,6 +87,8 @@ public function save($data, $id, $tags = array(), $lifeTime = null)
         $xml = new SimpleXMLElement($data);
         $xmlPath = $xml->xpath('web/routers/standard');
         if (count($xmlPath) != 1) {
+            $e = new Exception();
+            Mage::log($e->getTraceAsString(), null, 'corrupt-cache.log', true);
             //Returning true to prevent it from saving an incomplete cache entry
             return true;
         }
@@ -107,7 +109,9 @@ public function save($data, $id, $tags = array(), $lifeTime = null)
 }
 ```
 
-This code change did not 'solve' the issue, but it did stop the website crashing so much. It was also useful as a point of debugging, as I now had a place from which I could monitor and log the issue.
+This code change did not 'solve' the issue, but it did stop corrupted configuration being saved and prevented the website crashing so much. 
+
+It was also useful as a point of debugging, as I now had a place from which I could monitor and log the issue. The stack trace logged here was vital in learning what was causing the issue.
 
 ## The Problem ##
 
@@ -350,6 +354,12 @@ public function init($options=array())
     return $this;
 }
 ```
+
+It would be naive of me to believe that this will completely solve the issue for everyones Magento setup. If it does not work for you then I recommend you 
+
+1. Implement the logic mentioned in the [ Debugging the Issue](#debugging-the-issue) section.
+2. Wait for some log data to appear.
+3. Contact me!
 
 ## Performance ##
 
