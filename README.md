@@ -13,6 +13,16 @@ http://ampersandcommerce.com
 
 If this document helps you out then please give it a star, thanks!
 
+# Update: Good news! A patch from Magento
+
+[`PATCH_SUPEE-4755_EE_1.13.1.0_v1.sh`](/PATCH_SUPEE-4755_EE_1.13.1.0_v1.sh)
+
+This patch is the exact same as my fix which gives it some validity.
+
+This patch isn't publicly listed anywhere because Magento don't do that for anything but security patches for some reason. I know the patch file says EE_1.13.1.0, but I tested it on community edition 1.9 and it applied fine.
+
+... I guess that makes me a Magento 1 core contributor now?
+
 ##Preface##
 The majority of my experimentation took place on EE 1.13.0.1 and while this bug does also affect CE 1.9.1.0 I will be referring to EE 1.13.0.1 code throughout the explanation.
 
