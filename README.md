@@ -11,6 +11,16 @@ http://ampersandcommerce.com
 7. [PHPUnit Tests](#phpunit-tests)
 8. [The Fix](#the-fix)
 
+# Update: Good news! A patch from Magento
+
+[`PATCH_SUPEE-4755_EE_1.13.1.0_v1.sh`](/PATCH_SUPEE-4755_EE_1.13.1.0_v1.sh#L172)
+
+This patch is the exact same as my fix which gives it some validity.
+
+This patch isn't publicly listed anywhere because Magento don't do that for anything but security patches for some reason. I know the patch file says EE_1.13.1.0, but I tested it on community edition 1.9 and it applied fine.
+
+... I guess that makes me a Magento 1 core contributor now?
+
 If this document helps you out then please give it a star, thanks!
 
 ##Preface##
