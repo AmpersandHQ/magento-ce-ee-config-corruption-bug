@@ -11,7 +11,7 @@ http://ampersandcommerce.com
 7. [PHPUnit Tests](#phpunit-tests)
 8. [The Fix](#the-fix)
 
-# Update 2: Further improvements to Mage_Core_Model_Config
+# Update 2: Further improvements
 
 Since SUPEE-6788 I've been contacted a lot by people who have tried the [the Fix](#the-fix) described below with mixed results:
 
@@ -23,8 +23,8 @@ Please do not give me SSH access to your server without first agreeing payment ;
 
 Anyway, I do have a few further improvements to Mage_Core_Model_Config that I've been using in production for a while now, they seem to be helping. Click through to read more.
 
-1. [Config Cache Corruption Fix - 100 Router Match Iterations - Unreadable local.xml](/IMPROVEMENTS.md)
-2. [Config Generation Performance Fix - allowUseCacheForInit](/IMPROVEMENTS.md)
+1. [Config Cache Corruption Fix - 100 Router Match Iterations - Unreadable local.xml](/IMPROVEMENTS.md#config-cache-corruption-fix---100-router-match-iterations---unreadable-localxml)
+2. [Config Generation Performance Fix - allowUseCacheForInit](/IMPROVEMENTS.md#config-generation-performance-fix---allowusecacheforinit)
 
 # Update: Good news! A patch from Magento
 

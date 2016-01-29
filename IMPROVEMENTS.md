@@ -1,3 +1,5 @@
+# Config Cache Corruption Fix - 100 Router Match Iterations - Object Caching and Race Conditions
+
 See [`README.md`](/README.md)
  for more details of the Magento Config Cache corruption bug caused by race conditions.
  
