@@ -21,8 +21,6 @@ Since SUPEE-6788 I've been contacted a lot by people who have tried the [the Fix
 * I applied your patch and it didn't work, do you have any other recommendations?
 * I applied your patch, dropped `core_config_data`, dropped `core_url_rewrite`, and now my website isn't working. Here is root SSH access please fix.
 
-Please do not give me SSH access to your server without first agreeing payment ;) 
-
 Anyway, I do have a few further improvements to Mage_Core_Model_Config that I've been using in production for a while now, they seem to be helping. Click through to read more.
 
 1. [Config Cache Corruption Fix - 100 Router Match Iterations - Unreadable local.xml](/IMPROVEMENTS.md#config-cache-corruption-fix---100-router-match-iterations---unreadable-localxml)
