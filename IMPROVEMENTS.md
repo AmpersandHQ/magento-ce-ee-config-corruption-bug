@@ -73,12 +73,40 @@ This one is pretty simple. At the very end of `Mage_Core_Model_Config::saveCache
         
 This flag blocks the usage of `_canUseCacheForInit` and by extension, `loadModulesCache`. This flag is set to `false` during the `reinit` method.
 
-This means that, without my change, calls like the following would result in two full regenerations of the configuration cache when it only needed to do one.
+This means that, without my change, calls like the following would result in multiple full regenerations of the configuration cache when it only needed to do one.
 
+    <?php
+    require_once __DIR__ . '/app/Mage.php';
+    Mage::app();
+    
     $config = Mage::getConfig();
-    $config->reinit()
-    $config->init();
-
+    
+    /**
+     * Sets _allowCacheForInit=false, then regenerates the config and saves it to cache
+     * This function could be triggered by a failure to grab any part of the config from cache
+     * See Mage_Core_Model_Config::_loadSectionCache
+     *
+     * By the end of this function the config has been fully regenerated and added to cache and
+     * should be usable again.
+     */
+    $config->reinit();
+    
+    for ($i=0; $i<100; $i++) {
+        /**
+         * Init() attempts to load the config from cache with loadModulesCache
+         * This fails because of _allowCacheForInit which is false, despite the fact the config
+         * exists and is valid.
+         *
+         * This will trigger a full config regeneration which can be quite expensive depending on
+         * the amount of store views etc.
+         *
+         * If the $config->reinit() above had correctly reset the _allowCacheForInit flag after
+         * regenerating the config, then this loop would be safe and load onfiguration from the 
+         * cache. This wouldn't cause 100 extra config regenerations to trigger.
+         */
+        $config->init();
+    }
+    
 This may not be an issue for your site, but we had a cron task running `Mage::app()->init()` within a loop, which was triggering `Mage_Core_Model_Config::init()` to be called in a loop, which caused the configuration to be constantly regenerated multiple times in a loop!
 
 This one line fix settled things down quite a bit.
