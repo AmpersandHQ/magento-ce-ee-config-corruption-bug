@@ -13,6 +13,18 @@ http://ampersandcommerce.com
 
 If this document helps you out then please give it a star, thanks!
 
+# Update 3: Baked into the core
+
+As of Magento 1.9.3.1 the fix discovered in this write up has been [included in the core](https://github.com/AmpersandHQ/magento-ce-ee-config-corruption-bug/issues/9). 
+
+If you still suffering configuration cache corruption you should
+
+1. Upgrade to 1.9.3.1.
+2. Apply the available patches to your older version of Magento
+    1. Apply the fix from this write up (SUPEE-4755).
+    2. If you are running php-fpm read the [following article](https://www.c3media.co.uk/blog/c3-news/security-fix-might-take-site/) and ensure the patch is applied.
+3. If you are _still_ seeing frequent issues try the core modification described [here](/IMPROVEMENTS.md#config-cache-corruption-fix---100-router-match-iterations---unreadable-localxml).
+
 # Update 2: Further improvements
 
 Since SUPEE-6788 I've been contacted a lot by people who have tried the [the Fix](#the-fix) described below with mixed results:
