@@ -48,10 +48,10 @@ This patch isn't publicly listed anywhere because Magento don't do that for anyt
 
 ... I guess that makes me a Magento 1 core contributor now?
 
-##Preface##
+## Preface
 The majority of my experimentation took place on EE 1.13.0.1 and while this bug does also affect CE 1.9.1.0 I will be referring to EE 1.13.0.1 code throughout the explanation.
 
-##`Mage_Core_Model_Config` and Caching##
+## `Mage_Core_Model_Config` and Caching
 
 `Mage_Core_Model_Config` is the class responsible for merging all the system configuration files (config.xml, local.xml) and module configuration files (config.xml) into one object. There are 3 basic parts to the `Mage_Core_Model_Config::init()` call
 
@@ -87,19 +87,19 @@ If at any point something were to silently go wrong within `loadModules` or `loa
 
 `Mage_Core_Model_Config` also has a protected variable `$_useCache`. When this flag is set Magento will attempt to load sections of the config from cache storage then persist them within the singleton itself.
 
-##Symptoms of a Corrupted Config Cache##
+## Symptoms of a Corrupted Config Cache
 
 The following symptoms would usually manifest when the website is experiencing high load, and very often after a cache flush was triggered. The symptoms persist until you flush the `CONFIG` cache.
 
-###Enterprise Edition###
+### Enterprise Edition
 Your website produces nothing but `Front controller reached 100 router match iterations` reports. (Tested on Magento 1.12 and 1.13)
 
-###Community Edition###
+### Community Edition
 Your homepage fails to load the CSS, and a message is displayed saying `There was no 404 CMS page configured or found`. 
 
 I have not spent much time debugging the effects on the community edition, there are likely other symptoms. (Tested on Magento 1.9.1.0)
 
-## Debugging the Issue ##
+## Debugging the Issue
 
 [Many](http://tutorialmagento.com/fixing-front-controller-reached-100-router-match-iterations) [sources](http://www.magestore.com/magento/magento-front-controller-reached-100-router-match-iterations-error.html) [correctly](http://stackoverflow.com/questions/6262129/magento-front-controller-reached-100-router-match-iterations-error) point out that the problem is caused by some of the routers disappearing from the configuration object, meaning there is no router available to match the request.
 
@@ -148,7 +148,7 @@ This code change did not 'solve' the issue, but it did stop corrupted configurat
 
 It was also useful as a point of debugging, as I now had a place from which I could monitor and log the issue. The stack trace logged here was vital in learning what was causing the issue.
 
-## The Problem ##
+## The Problem
 
 By using apache bench to stress my Magento instance along with a lot of `file_put_contents` debugging I was able to discover that the invalid configuration was generated in the `loadDb` method of `Mage_Core_Model_Config`, but only under the following conditions
 
@@ -156,7 +156,7 @@ By using apache bench to stress my Magento instance along with a lot of `file_pu
 2. The first call to `loadModulesCache` must successfully load from cache and set `$_useCache = true`
 3. The second call must fail to retrieve the config from cache, and proceed to incorrectly rebuild the cache because `$_useCache = true` is still set.
 
-### Explanation ###
+### Explanation
 To understand how we get this flow we'll have to revisit `Mage_Core_Model_Config::init()` and a few other functions.
 
 ```php
@@ -230,7 +230,7 @@ protected function _canUseCacheForInit()
 
 The problem in our case was that on the second run of `Mage_Core_Model_Config::init()` we were failing the `_canUseCacheForInit` call because the cache was locked. This meant that we would proceed to regenerate and save the `CONFIG` cache while the singletons `$_useCache` was erroneously still set to `true`.
 
-### Cache Lock Generation ###
+### Cache Lock Generation
 
 As far as I am aware the cache is locked only within the `saveCache` call of the `Mage_Core_Model_Config` singleton. The cache is locked after the configuration has been generated and before the calls to `_saveCache` which will save the config for `config_global`, `config_websites` and `config_stores_{stores}`. The cache lock is removed when all the configuration has been saved in cache.
 
@@ -276,7 +276,7 @@ public function saveCache($tags=array())
 }
 ```
 
-### Step-By-Step ###
+### Step-By-Step
 
 What was happening was likely due to the shared cache storage between multiple servers, but could also have been caused by multiple processes running on one server.
 
@@ -294,7 +294,7 @@ Here's a step-by-step of what was happening in our instance, we had a cronjob wh
 |7   |  `init()` - calls `saveCache` with incorrectly generated data, causing the errors. | Some code is executed |   |
 
 
-# Replication #
+# Replication
 
 If you have a look at [`100-router-script.php`](/100-router-script.php) you can see a simple script which should allow you to reproduce the bug on a Magento instance. Simply download it to the root of your Magento instance and run it. Alternatively you can specify the location of `Mage.php` using an environment variable.
 
@@ -304,7 +304,7 @@ MAGE_PATH="/path/to/magento/app/Mage.php" php 100-router-script.php
 
 I was unable to easily reproduce the time sensitive cache hit on `global_config.lock`, however I was able to emulate it by making `loadModulesCache` fail to load `config_global` on the second call.
 
-# PHPUnit Tests #
+# PHPUnit Tests
 
 The [phpunit tests](/tests/ConfigurationTest.php) simulate the time sensitive cache hit on `global_config.lock` in two different ways:
 * By using [`Convenient_Core_Model_Config`](/lib/Convenient/Core/Model/Config.php), a custom configuration model which returns `true` for the second call to `loadCache` for the `config_global.lock` entry.
@@ -357,7 +357,7 @@ Time: 2.87 seconds, Memory: 16.50Mb
 OK (2 tests, 2 assertions)
 ```
 
-# The Fix #
+# The Fix
 
 2 weeks of work and all this for a 1 line fix.
 
@@ -394,8 +394,8 @@ It would be naive of me to believe that this will completely solve the issue for
 
 1. Implement the logic mentioned in the [ Debugging the Issue](#debugging-the-issue) section.
 2. Wait for some log data to appear.
-3. Contact me!
+3. Debug.
 
-## Performance ##
+## Performance 
 
 I do not believe that this fix will affect performance in any negative way as the usual flow for `loadModules`, `loadDb` and `saveCache` is for `$_useCache` to be `false`.
